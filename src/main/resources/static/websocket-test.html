@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat Test</title>
+</head>
+<body>
+<h2>WebSocket Chat Test</h2>
+
+<div>
+    <button onclick="connect()">Click this button to begin testing</button>
+    <button onclick="disconnect()">Disconnect</button>
+</div>
+
+<div>
+    <label for="chatRoom">Chat Room ID:</label>
+    <input type="text" id="chatRoom" value="12345" />
+</div>
+
+<div>
+    <label for="message">Message:</label>
+    <input type="text" id="message" />
+    <button onclick="sendMessage()">Send Message</button>
+</div>
+
+<div id="messages"></div>
+
+<!-- Include SockJS and Stomp.js libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+
+<script>
+    var stompClient = null;
+
+    function connect() {
+        var chatRoomId = document.getElementById("chatRoom").value;
+        var socket = new SockJS('/ws'); // Create a SockJS connection
+        stompClient = Stomp.over(socket); // Wrap the SockJS connection in STOMP
+
+        stompClient.connect({}, function(frame) {
+            console.log('Connected: ' + frame);
+
+            // Subscribe to the topic
+            stompClient.subscribe('/topic/public/' + chatRoomId, function(messageOutput) {
+                showMessage(JSON.parse(messageOutput.body).msg);
+            });
+        });
+    }
+
+    function sendMessage() {
+        if (stompClient && stompClient.connected) {
+            var chatRoomId = document.getElementById("chatRoom").value;
+            var message = document.getElementById("message").value;
+            stompClient.send("/app/chat.SendMessage", {}, JSON.stringify({
+                'sender': 'Om',
+                'msg': message,
+                'chatRoomId': chatRoomId
+            }));
+        } else {
+            alert('You are not connected to the WebSocket!');
+        }
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect(function() {
+                console.log('Disconnected');
+                showMessage('You have disconnected from the chat.');
+            });
+            stompClient = null;
+        } else {
+            alert('You are not connected!');
+        }
+    }
+
+    function showMessage(message) {
+        var messagesDiv = document.getElementById("messages");
+        messagesDiv.innerHTML += "<p>" + message + "</p>";
+    }
+</script>
+
+</body>
+</html>
+
