@@ -64,7 +64,7 @@
         if (stompClient !== null) {
             stompClient.disconnect(function() {
                 console.log('Disconnected');
-                showMessage('You are disconnected from the chat.');
+                showMessage('You have disconnected from the chat.');
             });
             stompClient = null;
         } else {
